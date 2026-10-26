@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Emitir Orçamento | Produção de Velas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 p-6 md:p-10 pb-28">
+  <div class="max-w-5xl mx-auto space-y-6">
+
+    <!-- Barra de Navegação -->
+    <nav class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center justify-between">
+      <div class="font-bold text-slate-900 text-lg">Sistema de Produção de Velas</div>
+      <div class="flex gap-2">
+        <a href="/" class="px-3 py-1.5 rounded-lg text-sm font-medium bg-amber-600 text-white">Emitir Orçamento</a>
+        <a href="/produtos" class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Produtos</a>
+        <a href="/clientes" class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Clientes</a>
+        <a href="/configuracoes" class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Insumos</a>
+      </div>
+    </nav>
+
+    <!-- Formulário Principal -->
+    <form action="/gerar-orcamento" method="POST" id="form-orcamento" class="space-y-6">
+      
+      <!-- Seção 1: Identificação do Cliente -->
+      <section class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+          <h2 class="text-base font-bold text-slate-900">1. Seleção de Cliente e Emissão</h2>
+          <a href="/clientes" class="text-xs text-amber-600 hover:text-amber-800 font-semibold">+ Cadastrar Novo Cliente</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Seletor de Cliente Cadastrado -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Cliente Cadastrado</label>
+            <select name="cliente_id" id="cliente_id" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-amber-500">
+              <option value="">-- Selecione ou preencha avulso --</option>
+              {% for cliente in clientes %}
+              <option value="{{ cliente.id }}" data-contato="{{ cliente.contato }}">{{ cliente.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Nome Avulso (opcional se não selecionado) -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nome (se não cadastrado)</label>
+            <input type="text" name="cliente_nome_avulso" id="cliente_nome_avulso" placeholder="Digite o nome..." class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500">
+          </div>
+
+          <!-- Contato Avulso -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Telefone / Contato</label>
+            <input type="text" name="cliente_contato_avulso" id="cliente_contato_avulso" placeholder="(11) 99999-9999" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500">
+          </div>
+
+          <!-- Data de Emissão -->
+          <div class="md:col-span-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Data de Emissão</label>
+            <input type="date" name="data_emissao" value="{{ data_hoje }}" required class="w-full md:w-64 border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500">
+          </div>
+        </div>
+      </section>
+
+      <!-- Seção 2: Itens do Catálogo Cadastrado -->
+      <section class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+          <h2 class="text-base font-bold text-slate-900">2. Itens do Pedido (Grade de Produção)</h2>
+          <a href="/produtos" class="text-xs text-amber-600 hover:text-amber-800 font-semibold">+ Cadastrar Novo Produto</a>
+        </div>
+
+        {% if produtos %}
+        <div class="overflow-x-auto border border-slate-200 rounded-lg">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase">
+              <tr>
+                <th class="p-3">Modelo / Especificação</th>
+                <th class="p-3 text-right">Mão de Obra</th>
+                <th class="p-3 text-right">Cera / Un.</th>
+                <th class="p-3 text-right">Pavio / Un.</th>
+                <th class="p-3 text-center w-36">Quantidade</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              {% for p in produtos %}
+              <tr class="hover:bg-slate-50/50">
+                <td class="p-3 font-medium text-slate-800">{{ p.nome }}</td>
+                <td class="p-3 text-right text-slate-700">R$ {{ "%.2f"|format(p.valor_mao_de_obra)|replace('.', ',') }}</td>
+                <td class="p-3 text-right font-mono text-slate-500">{{ "%.3f"|format(p.cera_kg_unitario) }} kg</td>
+                <td class="p-3 text-right font-mono text-slate-500">{{ "%.2f"|format(p.pavio_m_unitario) }} m</td>
+                <td class="p-3 text-center">
+                  <input 
+                    type="number" 
+                    min="0" 
+                    value="0" 
+                    name="qtd_produto_{{ p.id }}" 
+                    class="w-24 text-center border border-slate-300 rounded-md p-1.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-amber-500"
+                  >
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center bg-slate-50 border border-dashed border-slate-300 rounded-lg">
+          <p class="text-slate-500 text-sm mb-3">Nenhum modelo de vela cadastrado ainda no banco de dados.</p>
+          <a href="/produtos" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2 rounded-lg text-xs shadow transition">
+            Cadastrar Primeiro Produto
+          </a>
+        </div>
+        {% endif %}
+      </section>
+
+      <!-- Seção 3: Insumos de Referência e Desconto -->
+      <section class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <h2 class="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100">3. Custos de Insumos e Condições</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Preço Ref. Cera (R$ / kg)</label>
+            <input type="number" step="0.01" min="0" name="preco_kg_cera" value="{{ '%.2f'|format(config.preco_kg_cera) }}" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-slate-50 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Preço Ref. Pavio (R$ / metro)</label>
+            <input type="number" step="0.01" min="0" name="preco_metro_pavio" value="{{ '%.2f'|format(config.preco_metro_pavio) }}" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-slate-50 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Desconto Mão de Obra (R$)</label>
+            <input type="number" step="0.01" min="0" name="desconto_mo" value="0.00" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500">
+          </div>
+          <div class="md:col-span-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Observações do Orçamento</label>
+            <textarea name="observacoes" rows="2" placeholder="Prazos, especificações das essências ou detalhes de entrega..." class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Barra de Ação Fixa no Rodapé (Garante que o botão nunca desapareça da tela) -->
+      <footer class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 py-3.5 px-6 shadow-lg z-50">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+          <span class="text-xs text-slate-500 hidden sm:inline">Defina as quantidades e gere o espelho de impressão A4.</span>
+          <button 
+            type="submit" 
+            class="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-bold px-8 py-3 rounded-xl shadow-md transition transform active:scale-95 text-sm uppercase tracking-wider"
+          >
+            Gerar Orçamento para Impressão &rarr;
+          </button>
+        </div>
+      </footer>
+
+    </form>
+  </div>
+
+  <script>
+    // Preenchimento automático do contato ao selecionar cliente cadastrado
+    const selectCliente = document.getElementById('cliente_id');
+    const inputNomeAvulso = document.getElementById('cliente_nome_avulso');
+    const inputContatoAvulso = document.getElementById('cliente_contato_avulso');
+
+    selectCliente.addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      if (this.value) {
+        inputNomeAvulso.value = '';
+        inputNomeAvulso.disabled = true;
+        inputNomeAvulso.classList.add('bg-slate-100');
+        inputContatoAvulso.value = selectedOption.getAttribute('data-contato') || '';
+      } else {
+        inputNomeAvulso.disabled = false;
+        inputNomeAvulso.classList.remove('bg-slate-100');
+        inputContatoAvulso.value = '';
+      }
+    });
+  </script>
+</body>
+</html>

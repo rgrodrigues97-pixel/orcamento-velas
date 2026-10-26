@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciar Clientes | Velas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 p-6 md:p-10">
+  <div class="max-w-5xl mx-auto space-y-6">
+
+    <!-- Barra de Navegação -->
+    <nav class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center justify-between">
+      <div class="font-bold text-slate-900 text-lg">Sistema de Produção de Velas</div>
+      <div class="flex gap-2">
+        <a href="/" class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Emitir Orçamento</a>
+        <a href="/produtos" class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Produtos</a>
+        <a href="/clientes" class="px-3 py-1.5 rounded-lg text-sm font-medium bg-amber-600 text-white">Clientes</a>
+        <a href="/configuracoes" class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Insumos</a>
+      </div>
+    </nav>
+
+    <!-- Formulário de Novo Cliente -->
+    <section class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+      <h2 class="text-base font-bold text-slate-900 mb-4">Cadastrar Novo Cliente</h2>
+      <form action="/clientes/adicionar" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div class="md:col-span-2">
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do Cliente / Razão Social</label>
+          <input type="text" name="nome" placeholder="Ex: Ateliê Essência & Luz" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Telefone / WhatsApp</label>
+          <input type="text" name="contato" placeholder="(11) 99999-9999" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-500">
+        </div>
+        <div class="md:col-span-3 flex justify-end">
+          <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-5 py-2 rounded-lg text-sm shadow transition">
+            Salvar Cliente
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Tabela de Clientes Cadastrados -->
+    <section class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+      <h2 class="text-base font-bold text-slate-900 mb-4">Clientes Registrados</h2>
+      <div class="overflow-x-auto border border-slate-200 rounded-lg">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase">
+            <tr>
+              <th class="p-3 w-16 text-center">ID</th>
+              <th class="p-3">Nome / Empresa</th>
+              <th class="p-3">Contato / Telefone</th>
+              <th class="p-3 text-center w-24">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            {% for cliente in clientes %}
+            <tr class="hover:bg-slate-50/50">
+              <td class="p-3 text-center text-slate-400 font-mono text-xs">#{{ cliente.id }}</td>
+              <td class="p-3 font-medium text-slate-800">{{ cliente.nome }}</td>
+              <td class="p-3 text-slate-600">{{ cliente.contato if cliente.contato else "—" }}</td>
+              <td class="p-3 text-center">
+                <form action="/clientes/excluir/{{ cliente.id }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este cliente?');">
+                  <button type="submit" class="text-rose-600 hover:text-rose-800 text-xs font-semibold">Excluir</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="p-4 text-center text-slate-400">Nenhum cliente cadastrado no momento.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Orçamento Nº {{ orcamento.numero_orcamento }} - {{ orcamento.cliente_nome }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      body {
+        background-color: #ffffff;
+        padding: 0;
+        margin: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .page-sheet {
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 1.5cm !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 p-4 md:p-8">
+
+  <!-- Barra superior com controles (Oculta na impressão) -->
+  <div class="max-w-4xl mx-auto mb-6 flex justify-between items-center no-print">
+    <a href="/" class="text-sm font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1 transition">
+      &larr; Voltar e Editar
+    </a>
+    <button onclick="window.print()" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-5 py-2 rounded-lg shadow transition">
+      Imprimir / Salvar PDF
+    </button>
+  </div>
+
+  <!-- Folha Principal (Padrão A4) -->
+  <article class="page-sheet max-w-4xl mx-auto bg-white p-10 border border-slate-200 shadow-sm text-sm">
+    
+    <!-- Cabeçalho Institucional -->
+    <header class="border-b-2 border-slate-900 pb-4 mb-6 flex justify-between items-start">
+      <div>
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 uppercase">Orçamento de Industrialização</h1>
+        <p class="text-xs text-slate-500 font-medium">Serviço de Mão de Obra por Encomenda</p>
+      </div>
+      <div class="text-right">
+        <p class="text-xs text-slate-500 font-bold uppercase">Nº do Documento</p>
+        <p class="text-base font-bold text-slate-900 font-mono">{{ orcamento.numero_orcamento }}</p>
+        <p class="text-xs text-slate-500 mt-1">Data: {{ orcamento.data_emissao }}</p>
+      </div>
+    </header>
+
+    <!-- Dados do Cliente -->
+    <section class="bg-slate-50 p-4 rounded border border-slate-200 mb-6 grid grid-cols-2 gap-4">
+      <div>
+        <span class="block text-xs uppercase font-bold text-slate-500">Cliente</span>
+        <span class="font-semibold text-slate-800 text-base">{{ orcamento.cliente_nome }}</span>
+      </div>
+      <div>
+        <span class="block text-xs uppercase font-bold text-slate-500">Contato / Telefone</span>
+        <span class="text-slate-700">{{ orcamento.cliente_contato if orcamento.cliente_contato else "Não informado" }}</span>
+      </div>
+    </section>
+
+    <!-- Seção 1: Mão de Obra Contratada -->
+    <section class="mb-6">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 border-b border-slate-200 pb-1">
+        1. Serviços de Fabricação (Mão de Obra)
+      </h2>
+      <table class="w-full text-left border-collapse text-xs">
+        <thead class="bg-slate-100 border-b border-slate-300 text-slate-700">
+          <tr>
+            <th class="p-2">Item / Descrição</th>
+            <th class="p-2 text-center w-20">Qtd</th>
+            <th class="p-2 text-right w-28">Valor Unit. (MO)</th>
+            <th class="p-2 text-right w-28">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+          {% for item in orcamento.itens %}
+          <tr>
+            <td class="p-2 font-medium text-slate-800">{{ item.produto.nome }}</td>
+            <td class="p-2 text-center">{{ item.quantidade }}</td>
+            <td class="p-2 text-right">R$ {{ "%.2f"|format(item.produto.valor_mao_de_obra)|replace('.', ',') }}</td>
+            <td class="p-2 text-right font-medium">R$ {{ "%.2f"|format(item.subtotal_mo)|replace('.', ',') }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" class="p-3 text-center text-slate-400">Nenhum item selecionado.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Fechamento Mão de Obra -->
+      <div class="mt-3 flex justify-end">
+        <div class="w-64 space-y-1 text-xs">
+          <div class="flex justify-between text-slate-600">
+            <span>Subtotal Mão de Obra:</span>
+            <span>R$ {{ "%.2f"|format(orcamento.total_mo_bruto)|replace('.', ',') }}</span>
+          </div>
+          {% if orcamento.desconto_mo > 0 %}
+          <div class="flex justify-between text-emerald-700 font-medium">
+            <span>Desconto Aplicado:</span>
+            <span>- R$ {{ "%.2f"|format(orcamento.desconto_mo)|replace('.', ',') }}</span>
+          </div>
+          {% endif %}
+          <div class="flex justify-between font-bold text-slate-900 border-t border-slate-300 pt-1 text-sm">
+            <span>Total Mão de Obra (A):</span>
+            <span>R$ {{ "%.2f"|format(orcamento.total_mo_liquido)|replace('.', ',') }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seção 2: Demonstrativo Técnico de Insumos -->
+    <section class="mb-6">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 border-b border-slate-200 pb-1">
+        2. Demonstrativo de Insumos Necessários (Fornecimento do Cliente)
+      </h2>
+      <table class="w-full text-left border-collapse text-xs">
+        <thead class="bg-slate-100 border-b border-slate-300 text-slate-700">
+          <tr>
+            <th class="p-2">Insumo</th>
+            <th class="p-2 text-center w-36">Consumo Total</th>
+            <th class="p-2 text-right w-36">Custo Ref. Unitário</th>
+            <th class="p-2 text-right w-36">Custo Estimado</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+          <tr>
+            <td class="p-2 font-medium text-slate-800">Cera (kg)</td>
+            <td class="p-2 text-center font-mono">{{ "%.3f"|format(orcamento.total_cera_kg) }} kg</td>
+            <td class="p-2 text-right text-slate-600">R$ {{ "%.2f"|format(orcamento.preco_kg_cera)|replace('.', ',') }} / kg</td>
+            <td class="p-2 text-right font-medium">R$ {{ "%.2f"|format(orcamento.custo_estimado_cera)|replace('.', ',') }}</td>
+          </tr>
+          <tr>
+            <td class="p-2 font-medium text-slate-800">Pavio (metros)</td>
+            <td class="p-2 text-center font-mono">{{ "%.2f"|format(orcamento.total_pavio_m) }} m</td>
+            <td class="p-2 text-right text-slate-600">R$ {{ "%.2f"|format(orcamento.preco_metro_pavio)|replace('.', ',') }} / m</td>
+            <td class="p-2 text-right font-medium">R$ {{ "%.2f"|format(orcamento.custo_estimado_pavio)|replace('.', ',') }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="mt-2 flex justify-end">
+        <div class="w-64 flex justify-between font-bold text-slate-700 text-xs border-t border-slate-200 pt-1">
+          <span>Total Estimado Insumos (B):</span>
+          <span>R$ {{ "%.2f"|format(orcamento.custo_total_insumos)|replace('.', ',') }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Resumo Consolidado -->
+    <section class="border-2 border-slate-900 p-4 rounded mb-6 bg-slate-50/50">
+      <div class="flex justify-between items-center text-sm">
+        <div>
+          <span class="block text-xs uppercase font-bold text-slate-500">Valor a Faturar (Serviço Líquido):</span>
+          <span class="text-xl font-bold text-slate-900">R$ {{ "%.2f"|format(orcamento.total_mo_liquido)|replace('.', ',') }}</span>
+        </div>
+        <div class="text-right">
+          <span class="block text-xs uppercase font-bold text-slate-500">Custo Global Estimado do Lote:</span>
+          <span class="text-sm font-semibold text-slate-700">R$ {{ "%.2f"|format(orcamento.valor_global_producao)|replace('.', ',') }}</span>
+          <span class="block text-[10px] text-slate-400">(Mão de Obra + Matéria-Prima)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Observações -->
+    {% if orcamento.observacoes %}
+    <section class="text-xs text-slate-600 border border-slate-200 p-3 rounded mb-8">
+      <strong class="block text-slate-700 mb-1 uppercase text-[10px]">Observações:</strong>
+      <p class="whitespace-pre-line">{{ orcamento.observacoes }}</p>
+    </section>
+    {% endif %}
+
+    <!-- Assinaturas / Aprovação -->
+    <footer class="mt-12 pt-8 border-t border-slate-200 grid grid-cols-2 gap-8 text-center text-xs text-slate-500">
+      <div>
+        <div class="border-b border-slate-400 mb-1 w-3/4 mx-auto"></div>
+        <p>Responsável pela Produção</p>
+      </div>
+      <div>
+        <div class="border-b border-slate-400 mb-1 w-3/4 mx-auto"></div>
+        <p>De Acordo (Cliente)</p>
+      </div>
+    </footer>
+  </article>
+
+</body>
+</html>
